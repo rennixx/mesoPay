@@ -1,0 +1,56 @@
+[package]
+name = "mesopotamia-core"
+version = "0.1.0"
+edition = "2021"
+description = "Core library for Mesopotamia SDK - Unified Iraqi payment infrastructure"
+license = "MIT"
+repository = "https://github.com/mesopotamia-sdk/mesopotamia-sdk"
+authors = ["Mesopotamia SDK Contributors"]
+
+[lib]
+name = "mesopotamia_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# HTTP client
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Cryptography
+hmac = "0.12"
+sha2 = "0.10"
+jsonwebtoken = "9.2"
+base64 = "0.21"
+hex = "0.4"
+subtle = "2.5"
+
+# Error handling
+thiserror = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+mockito = "1.2"
+tokio-test = "0.4"
+criterion = "0.5"
+
+[features]
+default = ["native"]
+native = []
+wasm = []
+
+[[bench]]
+name = "crypto"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

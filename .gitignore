@@ -1,0 +1,66 @@
+# Rust
+/core/target/
+**/*.rs.bk
+Cargo.lock
+
+# Go
+/mock-gateway/mock-gateway
+/mock-gateway/mock-gateway.exe
+
+# Flutter
+/flutter/.dart_tool/
+/flutter/.packages
+/flutter/.pub-cache/
+/flutter/.pub/
+/flutter/build/
+/flutter/*.iml
+/flutter/.metadata
+/flutter/pubspec.lock
+
+# Node.js
+/nodejs/node_modules/
+/nodejs/dist/
+/nodejs/*.log
+/nodejs/package-lock.json
+
+# Claude
+/.claude/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# Build outputs
+*.so
+*.dylib
+*.dll
+*.a
+*.wasm
+
+# Test coverage
+coverage/
+*.lcov
+.coverage
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
