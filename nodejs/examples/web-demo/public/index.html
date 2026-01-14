@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesopotamia Pay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Ionicons for Icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <main class="payment-container">
+        <!-- New Business/Order Header -->
+        <header class="order-header">
+            <div class="store-info">
+                <div class="store-icon">
+                    <ion-icon name="storefront"></ion-icon>
+                </div>
+                <div>
+                    <h1>Mega Smart Store</h1>
+                    <p class="order-ref">Order #ORD-2026-X92</p>
+                </div>
+            </div>
+            <div class="order-badge">
+                <ion-icon name="time-outline"></ion-icon>
+                <span>14:30</span>
+            </div>
+        </header>
+
+        <!-- Amount Display -->
+        <section class="amount-section">
+            <span class="currency">IQD</span>
+            <span class="amount">50,000</span>
+        </section>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="card">
+                <ion-icon name="card-outline"></ion-icon>
+                <span>Card</span>
+            </button>
+            <button class="tab-btn" data-tab="wallet">
+                <ion-icon name="wallet-outline"></ion-icon>
+                <span>Wallet</span>
+            </button>
+        </div>
+
+        <!-- Tab Content: Card -->
+        <div id="card-tab" class="tab-content active">
+
+
+            <!-- Card Form -->
+            <form class="card-form">
+                <div class="input-group">
+                    <label>Card Number</label>
+                    <div class="input-wrapper">
+                        <ion-icon name="card"></ion-icon>
+                        <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-group">
+                        <label>Expiry Date</label>
+                        <div class="input-wrapper">
+                            <ion-icon name="calendar"></ion-icon>
+                            <input type="text" placeholder="MM/YY" maxlength="5">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>CVV</label>
+                        <div class="input-wrapper">
+                            <ion-icon name="lock-closed"></ion-icon>
+                            <input type="text" placeholder="123" maxlength="3">
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Cardholder Name</label>
+                    <div class="input-wrapper">
+                        <ion-icon name="person"></ion-icon>
+                        <input type="text" placeholder="Start typing...">
+                    </div>
+                </div>
+            </form>
+
+            <button class="pay-button" onclick="alert('Card payment simulated!')">
+                Pay IQD 50,000
+            </button>
+        </div>
+
+        <!-- Tab Content: Wallet -->
+        <div id="wallet-tab" class="tab-content">
+            <div class="wallet-header">
+                <h3>Choose wallet</h3>
+            </div>
+
+            <div class="methods-grid">
+                <!-- FastPay -->
+                <label class="method-card">
+                    <input type="radio" name="provider" value="fastpay" checked>
+                    <div class="card-content">
+                        <img src="assets/fastpay_logo.png" alt="FastPay" class="provider-logo">
+                    </div>
+                </label>
+
+                <!-- FIB -->
+                <label class="method-card">
+                    <input type="radio" name="provider" value="fib">
+                    <div class="card-content">
+                        <img src="assets/fib_logo.png" alt="FIB" class="provider-logo">
+                    </div>
+                </label>
+            </div>
+
+            <!-- Dynamic Header for Selected Wallet -->
+            <div class="wallet-summary">
+                <p>Pay with <img id="selected-logo" src="assets/fastpay_logo.png" height="24"></p>
+                <div class="qr-placeholder">
+                    <ion-icon name="qr-code-outline" class="qr-icon"></ion-icon>
+                </div>
+                <p class="qr-text">Scan to pay</p>
+            </div>
+
+            <button id="payButtonWallet" class="pay-button">
+                <span class="btn-text">Open App & Pay</span>
+                <div class="spinner hidden"></div>
+            </button>
+        </div>
+
+        <p class="secure-badge">
+            <ion-icon name="shield-checkmark"></ion-icon>
+            Encrypted & Secure Payment
+        </p>
+
+    </main>
+
+    <!-- Powered By Footer -->
+    <footer class="mesopay-footer">
+        <span>Powered by</span>
+        <img src="assets/mesopay_logo.png" alt="MesoPay" class="footer-logo">
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,564 @@
+/* Existing styles + New Order Header & Footer Styles */
+:root {
+    --bg-color: #0F1115;
+    --card-bg: rgba(28, 30, 36, 0.85);
+    --primary: #6366F1;
+    --primary-hover: #4F46E5;
+    --text-main: #FFFFFF;
+    --text-muted: #9CA3AF;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --input-bg: rgba(0, 0, 0, 0.2);
+    --success: #10B981;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow-y: auto;
+    position: relative;
+    padding: 20px;
+}
+
+/* Background Animations */
+.background-blobs {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: float 10s infinite ease-in-out;
+}
+
+.blob-1 {
+    width: 400px;
+    height: 400px;
+    background: #4C1D95;
+    top: -100px;
+    left: -100px;
+}
+
+.blob-2 {
+    width: 300px;
+    height: 300px;
+    background: #BE185D;
+    bottom: -50px;
+    right: -50px;
+    animation-delay: -2s;
+}
+
+.blob-3 {
+    width: 200px;
+    height: 200px;
+    background: #0EA5E9;
+    top: 40%;
+    left: 40%;
+    opacity: 0.2;
+    animation-delay: -5s;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate(0, 0);
+    }
+
+    50% {
+        transform: translate(30px, 50px);
+    }
+}
+
+/* Main Container */
+.payment-container {
+    background: var(--card-bg);
+    width: 100%;
+    max-width: 440px;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    margin-bottom: 24px;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* --- NEW ORDER HEADER --- */
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.store-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.store-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #374151, #1F2937);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #fff;
+    border: 1px solid var(--border-color);
+}
+
+.order-header h1 {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.order-ref {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'Space Mono', monospace;
+}
+
+.order-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Amount Section */
+.amount-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+}
+
+.currency {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-right: 4px;
+    vertical-align: top;
+    top: 4px;
+    position: relative;
+}
+
+.amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #fff, #cbd5e1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.tab-btn ion-icon {
+    font-size: 1.2rem;
+}
+
+.tab-btn.active {
+    background: #2D303E;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Forms */
+.card-form {
+    margin-bottom: 2rem;
+}
+
+.input-group {
+    margin-bottom: 1rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.input-wrapper {
+    position: relative;
+    background: var(--input-bg);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper:focus-within {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.input-wrapper ion-icon {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    padding-left: 12px;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+}
+
+.row {
+    display: flex;
+    gap: 12px;
+}
+
+.row .input-group {
+    flex: 1;
+}
+
+/* --- WALLET TAB --- */
+.wallet-header h3 {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Wallet Grid - Side by Side */
+.methods-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 2rem;
+}
+
+.method-card {
+    position: relative;
+    cursor: pointer;
+}
+
+.method-card input {
+    display: none;
+}
+
+/* Tile Style */
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    /* Reduced padding for smaller, rectangular look */
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    height: 100%;
+}
+
+.method-card:hover .card-content {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Selected State */
+/* Selected State Base */
+.method-card input:checked+.card-content {
+    /* Colors handled by specific selectors below */
+    transform: translateY(-2px);
+}
+
+.provider-logo {
+    width: 60px;
+    /* Larger logo as per Flutter prominence */
+    height: 36px;
+    border-radius: 0;
+    /* Logos usually rectangular or transparent */
+    margin: 0;
+    object-fit: contain;
+    background: transparent;
+    /* Remove white box if possible, or keep if needed for contrast. Flutter uses Image.network directly. Let's try transparent. */
+    padding: 0;
+}
+
+.provider-name {
+    display: none;
+    /* Ensure hidden if HTML persists */
+}
+
+/* Hide Radio Circle - Removed from HTML but keeping safe style cleanup if needed previously */
+.check-circle {
+    display: none;
+}
+
+/* Provider Specific Active States */
+.method-card input[value="fastpay"]:checked+.card-content {
+    background: rgba(237, 28, 36, 0.1);
+    border-color: #ED1C24;
+    box-shadow: 0 0 15px rgba(237, 28, 36, 0.2);
+}
+
+.method-card input[value="fib"]:checked+.card-content {
+    background: rgba(0, 166, 81, 0.1);
+    border-color: #00A651;
+    box-shadow: 0 0 15px rgba(0, 166, 81, 0.2);
+}
+
+/* Generic active fallback (should be overridden) */
+.method-card input:checked+.card-content {
+    border-width: 2px;
+}
+
+.wallet-summary {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+}
+
+.wallet-summary p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.qr-placeholder {
+    width: 140px;
+    height: 140px;
+    background: white;
+    margin: 16px auto;
+    border-radius: 0;
+    /* Sharp edges as requested */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* QR Code Image - Hidden initially for fade-in */
+.qr-code-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.qr-code-img.loaded {
+    opacity: 1;
+}
+
+/* Shimmer Effect */
+.shimmer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+    background-size: 800px 104px;
+    animation: placeHolderShimmer 1.5s linear infinite forwards;
+}
+
+@keyframes placeHolderShimmer {
+    0% {
+        background-position: -400px 0;
+    }
+
+    100% {
+        background-position: 400px 0;
+    }
+}
+
+.qr-icon {
+    font-size: 140px;
+    color: #333;
+    display: none;
+    /* Hide icon if using real QR */
+}
+
+.qr-text {
+    font-size: 0.8rem !important;
+    opacity: 0.7;
+}
+
+/* Buttons */
+.pay-button {
+    width: 100%;
+    padding: 1.1rem;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary), #4F46E5);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.pay-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5);
+}
+
+.pay-button:active {
+    transform: translateY(0);
+}
+
+/* Footer */
+.secure-badge {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    opacity: 0.7;
+}
+
+/* Spinner */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-top: -10px;
+    margin-left: -10px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.hidden {
+    display: none;
+}
+
+.btn-text.loading {
+    visibility: hidden;
+}
+
+/* --- NEW POWERED BY FOOTER --- */
+.mesopay-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    margin-top: 20px;
+}
+
+.mesopay-footer span {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.footer-logo {
+    height: 24px;
+    width: auto;
+    object-fit: contain;
+}
+
+.mesopay-footer:hover {
+    opacity: 1;
+}
