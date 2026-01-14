@@ -5,7 +5,7 @@ use crate::crypto::{generate_hmac_sha256, generate_jwt_hs256, verify_webhook_sig
 use crate::error::{MesopotamiaError, Result};
 use crate::types::{Environment, PaymentProvider, PaymentRequest, PaymentResponse, PaymentStatus};
 use reqwest::header::{HeaderMap, AUTHORIZATION, CONTENT_TYPE};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// ZainCash gateway client

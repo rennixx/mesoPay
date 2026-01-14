@@ -1,508 +1,436 @@
 import 'package:flutter/material.dart';
-import 'package:mesopotamia_sdk/mesopotamia_sdk.dart';
+import 'package:mesopotamia_sdk/src/ui/simple_card_form.dart';
+import 'package:mesopotamia_sdk/src/ui/wallet_payment_widget.dart';
 
 void main() {
-  runApp(const MesopotamiaExampleApp());
+  runApp(const MesoPayDemoApp());
 }
 
-class MesopotamiaExampleApp extends StatelessWidget {
-  const MesopotamiaExampleApp({super.key});
+class MesoPayDemoApp extends StatelessWidget {
+  const MesoPayDemoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Mesopotamia SDK Demo',
+      title: 'MesoPay',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF6C5CE7)),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const PaymentDemoPage(),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class PaymentDemoPage extends StatefulWidget {
+  const PaymentDemoPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<PaymentDemoPage> createState() => _PaymentDemoPageState();
 }
 
-class _HomePageState extends State<HomePage> with DeepLinkHandlerMixin {
-  late final MesopotamiaSDK sdk;
-  PaymentResponse? lastPayment;
-  bool isLoading = false;
-  String? errorMessage;
-
-  // Form controllers
-  final amountController = TextEditingController(text: '50000');
-  final orderIdController = TextEditingController(text: 'ORDER_001');
-  final callbackUrlController = TextEditingController(
-    text: 'myapp://payment/callback',
-  );
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Initialize SDK with sandbox credentials
-    sdk = MesopotamiaSDK(
-      environment: Environment.sandbox,
-      providers: {
-        PaymentProvider.zainCash: ProviderConfig(
-          merchantId: '5c9c8c7e-f3f1-4f3e-9e3e-3e9f3e9f3e9f',
-          apiKey: 'test-api-key',
-          apiSecret: 'sandbox_secret_zaincash',
-          baseUrl: 'http://localhost:8080/zaincash',
-        ),
-        PaymentProvider.fastPay: ProviderConfig(
-          merchantId: 'store123',
-          apiKey: 'store123',
-          apiSecret: 'pass123',
-          baseUrl: 'http://localhost:8080/fastpay',
-        ),
-        PaymentProvider.fib: ProviderConfig(
-          merchantId: 'client123',
-          apiKey: 'client123',
-          apiSecret: 'secret123',
-          baseUrl: 'http://localhost:8080/fib',
-        ),
-      },
-      enableLogging: true,
-    );
-
-    // Initialize deep link handler
-    initDeepLinkHandler(sdk);
-    subscribeToDeepLinks();
-  }
-
-  @override
-  void handlePaymentResult(DeepLinkResult result) {
-    setState(() {
-      isLoading = false;
-      lastPayment = result.toPaymentResponse();
-    });
-
-    // Show result dialog
-    if (mounted) {
-      showDialog(
-        context: context,
-        builder: (context) => PaymentResultDialog(result: result),
-      );
-    }
-  }
-
-  Future<void> _showPaymentSheet(PaymentProvider provider) async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
-
-    try {
-      final amount = int.tryParse(amountController.text) ?? 0;
-      if (amount <= 0) {
-        throw Exception('يرجى إدخال مبلغ صحيح');
-      }
-
-      final request = PaymentRequest(
-        provider: provider,
-        amount: amount,
-        orderId: orderIdController.text,
-        callbackUrl: callbackUrlController.text,
-        webhookUrl: 'https://example.com/webhook',
-        description: 'دفل تجريبي',
-      );
-
-      final result = await showMesopotamiaPaymentSheet(
-        context: context,
-        sdk: sdk,
-        paymentRequest: request,
-        config: const PaymentSheetConfig(
-          merchantName: 'متجر تجريبي',
-          primaryColor: Color(0xFF00A651),
-          locale: 'ar_IQ',
-        ),
-      );
-
-      if (result != null && result.completed) {
-        setState(() {
-          lastPayment = result.response;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        errorMessage = e.toString();
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
-  }
+class _PaymentDemoPageState extends State<PaymentDemoPage> {
+  int _selectedTab = 0; // 0 = Card, 1 = Wallet
+  int _selectedWallet = 0; // 0 = FastPay, 1 = FIB
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mesopotamia SDK'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Header
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.payment,
-                      size: 48,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Mesopotamia Payment Gateway',
-                      style: Theme.of(context).textTheme.titleLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'واجهة برمجة موحدة للدفع الإلكتروني في العراق',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Payment Form
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'بيانات الدفع',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: amountController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'المبلغ (دينار)',
-                        prefixText: 'IQD ',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: orderIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'رقم الطلب',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: callbackUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'رابط الاستدعاء',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Provider Selection
-            Text(
-              'اختر بوابة الدفع',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            _buildProviderButton(
-              context,
-              title: 'ZainCash',
-              subtitle: 'محفظة زين كاش',
-              icon: Icons.account_balance_wallet,
-              color: const Color(0xFF00A651),
-              onTap: () => _showPaymentSheet(PaymentProvider.zainCash),
-            ),
-            const SizedBox(height: 12),
-            _buildProviderButton(
-              context,
-              title: 'FastPay',
-              subtitle: 'فاست باي',
-              icon: Icons.payment,
-              color: const Color(0xFFED1C24),
-              onTap: () => _showPaymentSheet(PaymentProvider.fastPay),
-            ),
-            const SizedBox(height: 12),
-            _buildProviderButton(
-              context,
-              title: 'FIB',
-              subtitle: 'بنك العراق الأول',
-              icon: Icons.account_balance,
-              color: const Color(0xFF003366),
-              onTap: () => _showPaymentSheet(PaymentProvider.fib),
-            ),
-            const SizedBox(height: 24),
-
-            // Error Message
-            if (errorMessage != null)
-              Card(
-                color: Theme.of(context).colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          errorMessage!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            // Last Payment Result
-            if (lastPayment != null)
-              Card(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
+      backgroundColor: const Color(0xFF1A1A2E),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Constrained width container
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'تم إنشاء الدفعة بنجاح',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
+                      // MesoPay Logo
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16, left: 4),
+                        child: Image.network(
+                          'mesopay_logo.png',
+                          height: 32,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 32,
+                              width: 100,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  'MesoPay',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                      const Divider(height: 24),
-                      _buildResultRow(
-                        context,
-                        'رقم المعاملة',
-                        lastPayment!.transactionId,
+
+                      // Payment method tabs
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2D2D44),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildTab(
+                                'Card',
+                                Icons.credit_card,
+                                0,
+                              ),
+                            ),
+                            Expanded(
+                              child: _buildTab(
+                                'Wallet',
+                                Icons.account_balance_wallet,
+                                1,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      _buildResultRow(
-                        context,
-                        'البوابة',
-                        lastPayment!.provider.name,
-                      ),
-                      _buildResultRow(
-                        context,
-                        'الحالة',
-                        lastPayment!.status.name,
+
+                      // Payment form based on selection
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: _selectedTab == 0
+                            ? _buildCardPayment()
+                            : _buildWalletPayment(),
                       ),
                     ],
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  Widget _buildProviderButton(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: isLoading ? null : onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 20),
+
+                // Security badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                    Icon(
+                      Icons.lock_outline,
+                      size: 14,
+                      color: Colors.grey.shade500,
                     ),
+                    const SizedBox(width: 6),
                     Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      'Secured with SSL encryption',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              if (isLoading)
-                const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              else
-                Icon(
-                  Icons.chevron_right,
-                  color: color,
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildResultRow(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ],
+  Widget _buildTab(String label, IconData icon, int index) {
+    final isSelected = _selectedTab == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6C5CE7) : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? Colors.white : Colors.grey.shade400,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isSelected ? Colors.white : Colors.grey.shade400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
-}
 
-class PaymentResultDialog extends StatelessWidget {
-  final DeepLinkResult result;
-
-  const PaymentResultDialog({super.key, required this.result});
-
-  @override
-  Widget build(BuildContext context) {
-    final isSuccess = result.status == PaymentStatus.completed;
-    final color = isSuccess
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.error;
-    final icon = isSuccess ? Icons.check_circle : Icons.error;
-
-    return AlertDialog(
-      icon: Icon(icon, size: 48, color: color),
-      title: Text(isSuccess ? 'تم الدفعة بنجاح' : 'فشلت الدفعة'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildDetail(context, 'رقم المعاملة', result.transactionId),
-          _buildDetail(context, 'الحالة', _getStatusText(result.status)),
-          _buildDetail(context, 'البوابة', result.provider.name),
-          if (result.metadata != null && result.metadata!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'بيانات إضافية:',
-              style: Theme.of(context).textTheme.labelMedium,
+  Widget _buildCardPayment() {
+    return SimpleCardPaymentForm(
+      key: const ValueKey('card'),
+      amount: 50000,
+      currency: 'IQD',
+      primaryColor: const Color(0xFF6C5CE7),
+      onSubmit: (data) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Processing ${data.cardType.name} card ending in ${data.cardNumber.substring(data.cardNumber.length - 4)}...',
             ),
-            ...result.metadata!.entries.map(
-              (e) => _buildDetail(context, e.key, e.value),
-            ),
-          ],
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('إغلاق'),
+            backgroundColor: const Color(0xFF6C5CE7),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWalletPayment() {
+    return Column(
+      key: const ValueKey('wallet'),
+      children: [
+        // Wallet selector
+        _buildWalletSelector(),
+        const SizedBox(height: 16),
+
+        // Selected wallet payment widget
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: _selectedWallet == 0
+              ? _buildFastPayWidget()
+              : _buildFIBWidget(),
         ),
       ],
     );
   }
 
-  Widget _buildDetail(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium,
+  Widget _buildWalletSelector() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(15),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Choose wallet',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF636E72),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              // FastPay option
+              Expanded(
+                child: _buildWalletOption(
+                  index: 0,
+                  logo: Image.network(
+                    'fastpay_logo.png',
+                    height: 20,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Text(
+                      'FastPay',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFED1C24),
+                      ),
+                    ),
+                  ),
+                  activeColor: const Color(0xFFED1C24),
                 ),
+              ),
+              const SizedBox(width: 12),
+              // FIB option
+              Expanded(
+                child: _buildWalletOption(
+                  index: 1,
+                  logo: Image.network(
+                    'fib_logo.png',
+                    height: 20,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Text(
+                      'FIB',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF00A651),
+                      ),
+                    ),
+                  ),
+                  activeColor: const Color(0xFF00A651),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  String _getStatusText(PaymentStatus status) {
-    switch (status) {
-      case PaymentStatus.completed:
-        return 'مكتمل';
-      case PaymentStatus.failed:
-        return 'فشل';
-      case PaymentStatus.pending:
-        return 'قيد الانتظار';
-      case PaymentStatus.cancelled:
-        return 'ملغي';
-      case PaymentStatus.expired:
-        return 'منتهي';
-    }
+  Widget _buildWalletOption({
+    required int index,
+    required Widget logo,
+    required Color activeColor,
+  }) {
+    final isSelected = _selectedWallet == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedWallet = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor.withAlpha(20) : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? activeColor : Colors.grey.shade200,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Center(child: logo),
+      ),
+    );
+  }
+
+  Widget _buildFastPayWidget() {
+    return WalletPaymentWidget(
+      key: const ValueKey('fastpay'),
+      config: WalletPaymentConfig(
+        providerName: '',
+        providerLogo: Image.network(
+          'fastpay_logo.png',
+          height: 24,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Text(
+            'FastPay',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFED1C24),
+            ),
+          ),
+        ),
+        transactionId: 'FP_${DateTime.now().millisecondsSinceEpoch}',
+        amount: 50000,
+        currency: 'IQD',
+        primaryColor: const Color(0xFFED1C24),
+        timeoutSeconds: 300,
+        qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://fast-pay.iq',
+        deepLinkUrl: 'appFpp://fast-pay.cash/qrpay?transactionId=ORDER_DEMO',
+        onPollStatus: (transactionId) async {
+          await Future.delayed(const Duration(seconds: 1));
+          return const PaymentPollResult(status: PaymentPollStatus.pending);
+        },
+        onPaymentConfirmed: (transactionId) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('FastPay payment confirmed!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        },
+        onTimeout: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment timed out'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        },
+        onCancel: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment cancelled'),
+              backgroundColor: Colors.grey,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFIBWidget() {
+    return WalletPaymentWidget(
+      key: const ValueKey('fib'),
+      config: WalletPaymentConfig(
+        providerName: '',
+        providerLogo: Image.network(
+          'fib_logo.png',
+          height: 24,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => const Text(
+            'FIB',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF00A651),
+            ),
+          ),
+        ),
+        transactionId: 'FIB_${DateTime.now().millisecondsSinceEpoch}',
+        amount: 50000,
+        currency: 'IQD',
+        primaryColor: const Color(0xFF00A651),
+        timeoutSeconds: 300,
+        qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://fib.iq',
+        deepLinkUrl: 'fib://pay?transactionId=ORDER_DEMO',
+        onPollStatus: (transactionId) async {
+          await Future.delayed(const Duration(seconds: 1));
+          return const PaymentPollResult(status: PaymentPollStatus.pending);
+        },
+        onPaymentConfirmed: (transactionId) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('FIB payment confirmed!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        },
+        onTimeout: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment timed out'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        },
+        onCancel: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment cancelled'),
+              backgroundColor: Colors.grey,
+            ),
+          );
+        },
+      ),
+    );
   }
 }

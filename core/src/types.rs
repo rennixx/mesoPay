@@ -82,6 +82,8 @@ pub enum PaymentStatus {
 /// Payment request
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaymentRequest {
+    /// Payment provider to use
+    pub provider: PaymentProvider,
     /// Amount in IQD (smallest unit)
     pub amount: u64,
     /// Merchant's unique order ID

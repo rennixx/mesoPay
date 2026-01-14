@@ -6,7 +6,8 @@ export 'src/models/payment_response.dart';
 export 'src/http/gateway_client.dart';
 
 // UI exports
-export 'src/ui/payment_sheet.dart';
+export 'src/ui/simple_card_form.dart';
+export 'src/ui/wallet_payment_widget.dart';
 
 // Deep link exports
 export 'src/deep_link/deep_link_handler.dart';

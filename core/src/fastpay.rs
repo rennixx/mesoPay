@@ -5,7 +5,7 @@ use crate::crypto::generate_hmac_sha256;
 use crate::error::{MesopotamiaError, Result};
 use crate::types::{Environment, PaymentProvider, PaymentRequest, PaymentResponse, PaymentStatus};
 use reqwest::header::HeaderMap;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// FastPay gateway client
