@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - MesoPay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #FEF2F2 0%, #FECACA 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        .icon-wrapper {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            20%,
+            60% {
+                transform: translateX(-5px);
+            }
+
+            40%,
+            80% {
+                transform: translateX(5px);
+            }
+        }
+
+        .icon-wrapper ion-icon {
+            font-size: 3rem;
+            color: white;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #991B1B;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #6B7280;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .error-box {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .error-code {
+            color: #DC2626;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .error-message {
+            color: #7F1D1D;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            display: inline-block;
+            padding: 14px 24px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: #F3F4F6;
+            color: #374151;
+            border: 1px solid #E5E7EB;
+        }
+
+        .btn-secondary:hover {
+            background: #E5E7EB;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            color: #9CA3AF;
+            font-size: 0.85rem;
+        }
+
+        .footer img {
+            height: 40px;
+            vertical-align: middle;
+            filter: brightness(0) opacity(0.5);
+        }
+
+        .help-text {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: #6B7280;
+        }
+
+        .help-text a {
+            color: #6366F1;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="icon-wrapper">
+            <ion-icon name="close"></ion-icon>
+        </div>
+
+        <h1>Payment Failed</h1>
+        <p class="subtitle">We couldn't process your payment.</p>
+
+        <div class="error-box">
+            <div class="error-code" id="errorCode">Error: PAYMENT_DECLINED</div>
+            <p class="error-message" id="errorMessage">The payment was declined by your bank. Please try a different
+                payment method or contact your bank.</p>
+        </div>
+
+        <div class="buttons">
+            <a href="javascript:history.back()" class="btn btn-primary">Try Again</a>
+            <a href="#" class="btn btn-secondary" id="cancelBtn">Cancel</a>
+        </div>
+
+        <p class="help-text">
+            Need help? <a href="mailto:support@mesopay.io">Contact Support</a>
+        </p>
+
+        <p class="footer">
+            Powered by <img src="assets/mesopay_logo.png" alt="MesoPay">
+        </p>
+    </div>
+
+    <script>
+        // Read URL params
+        const params = new URLSearchParams(window.location.search);
+
+        const errorCode = params.get('code') || 'PAYMENT_FAILED';
+        const errorMessage = params.get('message') || 'The payment could not be completed. Please try again.';
+
+        document.getElementById('errorCode').textContent = `Error: ${errorCode}`;
+        document.getElementById('errorMessage').textContent = errorMessage;
+
+        const cancelUrl = params.get('cancel') || '/';
+        document.getElementById('cancelBtn').href = cancelUrl;
+    </script>
+</body>
+
+</html>

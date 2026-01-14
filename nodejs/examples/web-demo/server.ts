@@ -41,6 +41,8 @@ interface PaymentSession {
     amount: number;
     currency: string;
     description?: string;
+    successUrl?: string; // Redirect after successful payment
+    cancelUrl?: string;  // Redirect if user cancels
     createdAt: Date;
     expiresAt: Date;
 }
@@ -55,7 +57,7 @@ function generateSessionId(): string {
 // API: Create Payment Session (Merchants call this)
 app.post('/api/create-session', (req, res) => {
     try {
-        const { storeName, storeIcon, orderId, amount, currency = 'IQD', description } = req.body;
+        const { storeName, storeIcon, orderId, amount, currency = 'IQD', description, successUrl, cancelUrl } = req.body;
 
         if (!storeName || !orderId || !amount) {
             return res.status(400).json({
@@ -73,6 +75,8 @@ app.post('/api/create-session', (req, res) => {
             amount: Number(amount),
             currency,
             description,
+            successUrl: successUrl || `/success.html?order=${orderId}&amount=${amount}`,
+            cancelUrl: cancelUrl || `/failed.html?order=${orderId}`,
             createdAt: new Date(),
             expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 min expiry
         };
@@ -115,6 +119,8 @@ app.get('/api/session/:id', (req, res) => {
             amount: session.amount,
             currency: session.currency,
             description: session.description,
+            successUrl: session.successUrl,
+            cancelUrl: session.cancelUrl,
         }
     });
 });

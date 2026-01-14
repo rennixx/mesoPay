@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - MesoPay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        .icon-wrapper {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .icon-wrapper ion-icon {
+            font-size: 3rem;
+            color: white;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #065F46;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #6B7280;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .details {
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+
+        .detail-value {
+            color: #1F2937;
+            font-weight: 600;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);
+        }
+
+        .footer {
+            margin-top: 2rem;
+            color: #9CA3AF;
+            font-size: 0.85rem;
+        }
+
+        .footer img {
+            height: 40px;
+            vertical-align: middle;
+            filter: brightness(0) opacity(0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="icon-wrapper">
+            <ion-icon name="checkmark"></ion-icon>
+        </div>
+
+        <h1>Payment Successful!</h1>
+        <p class="subtitle">Your transaction has been processed securely.</p>
+
+        <div class="details">
+            <div class="detail-row">
+                <span class="detail-label">Transaction ID</span>
+                <span class="detail-value" id="txnId">TXN-XXXX</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Order</span>
+                <span class="detail-value" id="orderId">ORD-XXXX</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Amount</span>
+                <span class="detail-value" id="amount">IQD 0</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Status</span>
+                <span class="detail-value" style="color: #10B981;">✓ Paid</span>
+            </div>
+        </div>
+
+        <a href="#" class="btn" id="returnBtn">Return to Store</a>
+
+        <p class="footer">
+            Powered by <img src="assets/mesopay_logo.png" alt="MesoPay">
+        </p>
+    </div>
+
+    <script>
+        // Read URL params
+        const params = new URLSearchParams(window.location.search);
+
+        document.getElementById('txnId').textContent = params.get('txn') || 'TXN-DEMO';
+        document.getElementById('orderId').textContent = params.get('order') || 'ORD-DEMO';
+        document.getElementById('amount').textContent = `IQD ${(params.get('amount') || '50000').toLocaleString()}`;
+
+        const returnUrl = params.get('return') || '/';
+        document.getElementById('returnBtn').href = returnUrl;
+    </script>
+</body>
+
+</html>

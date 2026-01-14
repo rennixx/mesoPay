@@ -9,7 +9,7 @@ async function loadSession() {
             const data = await response.json();
 
             if (data.success) {
-                const { storeName, storeIcon, orderId, amount, currency } = data.session;
+                const { storeName, storeIcon, orderId, amount, currency, successUrl, cancelUrl } = data.session;
 
                 // Update Store Name
                 document.querySelector('.order-header h1').textContent = storeName;
@@ -26,8 +26,10 @@ async function loadSession() {
                     btn.textContent = `Pay ${currency} ${amount.toLocaleString()}`;
                 });
 
-                // Store amount for payment
+                // Store session data for payment
                 window.paymentAmount = amount;
+                window.successUrl = successUrl;
+                window.cancelUrl = cancelUrl;
 
                 console.log('✅ Session loaded:', storeName);
             } else {
@@ -201,7 +203,11 @@ payButtonWallet.addEventListener('click', async () => {
                 window.location.href = result.redirectUrl;
             } else {
                 setLoading(payButtonWallet, false);
-                showModal('success', 'Payment Successful', `Transaction ID: ${result.transactionId}`);
+                showModal('success', 'Payment Successful', `Transaction ID: ${result.transactionId}`, () => {
+                    // Redirect to success page after modal is closed
+                    const successUrl = window.successUrl || `/success.html?txn=${result.transactionId}`;
+                    window.location.href = successUrl;
+                });
             }
         } else {
             throw new Error(result.error);
@@ -210,7 +216,11 @@ payButtonWallet.addEventListener('click', async () => {
     } catch (error) {
         console.error(error);
         setLoading(payButtonWallet, false);
-        showModal('error', 'Payment Failed', error.message || 'An unexpected error occurred.');
+        showModal('error', 'Payment Failed', error.message || 'An unexpected error occurred.', () => {
+            // Optionally redirect to failure page
+            // const cancelUrl = window.cancelUrl || '/failed.html';
+            // window.location.href = cancelUrl;
+        });
     }
 });
 
