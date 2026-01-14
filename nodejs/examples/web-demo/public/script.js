@@ -27,11 +27,10 @@ async function loadSession() {
                 });
 
                 // Store session data for payment
+                window.sessionId = sessionId;
                 window.paymentAmount = amount;
                 window.successUrl = successUrl;
                 window.cancelUrl = cancelUrl;
-
-                console.log('✅ Session loaded:', storeName);
             } else {
                 console.error('Session error:', data.error);
             }
@@ -190,7 +189,8 @@ payButtonWallet.addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 provider: selectedProvider,
-                amount: 50000
+                amount: window.paymentAmount || 50000,
+                sessionId: window.sessionId || null
             })
         });
 
@@ -294,16 +294,45 @@ cardCvv.addEventListener('input', (e) => {
 payButtonCard.addEventListener('click', async () => {
     // Basic Validation
     if (cardNumber.value.length < 19 || cardExpiry.value.length < 5 || cardCvv.value.length < 3) {
-        // Quick visual shake or error could go here, for now just modal
         showModal('error', 'Invalid Details', 'Please check your card information.');
         return;
     }
 
     setLoading(payButtonCard, true);
 
-    // Simulate Network Request
-    await new Promise(r => setTimeout(r, 2000));
+    // Simulate payment processing
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Generate transaction ID
+    const txnId = 'TXN-CARD-' + Date.now().toString(36).toUpperCase();
+
+    // If session exists, trigger internal webhook for card payment
+    if (window.sessionId) {
+        try {
+            await fetch(`/api/internal-webhook?sessionId=${window.sessionId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    transactionId: txnId,
+                    paymentMethod: 'card',
+                    status: 'completed'
+                })
+            });
+        } catch (e) {
+            // Webhook sent
+        }
+    }
 
     setLoading(payButtonCard, false);
-    showModal('success', 'Payment Successful', 'Your card payment processed successfully. Transaction ID: CARD_X9923');
+    showModal('success', 'Payment Successful', `Transaction ID: ${txnId}`, () => {
+        // Redirect to merchant's success page (or fallback to default)
+        let redirectUrl = window.successUrl || `/success.html`;
+
+        // Append transaction ID to the URL
+        const separator = redirectUrl.includes('?') ? '&' : '?';
+        redirectUrl += `${separator}txn=${txnId}`;
+
+        window.location.href = redirectUrl;
+    });
 });
+

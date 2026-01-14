@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - CloudSync Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-icon">☁️</span>
+                <span>CloudSync Pro</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/pricing.html">Pricing</a>
+                <a href="/settings.html">Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>Simple, Transparent <span class="gradient-text">Pricing</span></h1>
+        <p>Choose the plan that fits your needs. Upgrade or downgrade anytime.</p>
+    </header>
+
+    <section class="pricing-grid">
+        <!-- Basic Plan -->
+        <div class="pricing-card">
+            <div class="plan-name">Basic</div>
+            <div class="plan-price">25,000 <span>IQD/mo</span></div>
+            <ul class="plan-features">
+                <li>10 GB Storage</li>
+                <li>2 Devices</li>
+                <li>Basic Support</li>
+                <li>Standard Upload Speed</li>
+            </ul>
+            <button class="btn btn-secondary" onclick="checkout('Basic', 25000)">Get Started</button>
+        </div>
+
+        <!-- Pro Plan -->
+        <div class="pricing-card featured">
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">50,000 <span>IQD/mo</span></div>
+            <ul class="plan-features">
+                <li>100 GB Storage</li>
+                <li>5 Devices</li>
+                <li>Priority Support</li>
+                <li>Fast Upload Speed</li>
+                <li>File Versioning</li>
+            </ul>
+            <button class="btn btn-primary" onclick="checkout('Pro', 50000)">Get Started</button>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="pricing-card">
+            <div class="plan-name">Enterprise</div>
+            <div class="plan-price">150,000 <span>IQD/mo</span></div>
+            <ul class="plan-features">
+                <li>Unlimited Storage</li>
+                <li>Unlimited Devices</li>
+                <li>24/7 Support</li>
+                <li>Lightning Fast Upload</li>
+                <li>Advanced Analytics</li>
+                <li>Team Management</li>
+            </ul>
+            <button class="btn btn-secondary" onclick="checkout('Enterprise', 150000)">Contact Sales</button>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>© 2024 CloudSync Pro. Demo website for MesoPay SDK testing.</p>
+    </footer>
+
+    <script>
+        async function checkout(plan, amount) {
+            const btn = event.target;
+            btn.innerHTML = '<span class="spinner"></span>Processing...';
+            btn.classList.add('loading');
+
+            try {
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan, amount })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to MesoPay checkout
+                    window.location.href = data.paymentUrl;
+                } else {
+                    alert('Error: ' + data.error);
+                    btn.innerHTML = 'Get Started';
+                    btn.classList.remove('loading');
+                }
+            } catch (error) {
+                alert('Failed to start checkout: ' + error.message);
+                btn.innerHTML = 'Get Started';
+                btn.classList.remove('loading');
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,13 @@
+{
+    "name": "demo-merchant",
+    "version": "1.0.0",
+    "description": "Demo merchant website to test MesoPay SDK integration",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2"
+    }
+}

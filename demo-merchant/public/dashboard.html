@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CloudSync Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 7rem 2rem 4rem;
+        }
+
+        .welcome-section {
+            margin-bottom: 2rem;
+        }
+
+        .welcome-section h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-section p {
+            color: var(--text-muted);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .subscription-card {
+            grid-column: span 2;
+        }
+
+        .plan-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .plan-badge.free {
+            background: rgba(156, 163, 175, 0.15);
+            color: #9CA3AF;
+        }
+
+        .plan-badge.basic {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3B82F6;
+        }
+
+        .plan-badge.pro {
+            background: rgba(139, 92, 246, 0.15);
+            color: #8B5CF6;
+        }
+
+        .plan-badge.enterprise {
+            background: rgba(236, 72, 153, 0.15);
+            color: #EC4899;
+        }
+
+        .subscription-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .features-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-muted);
+        }
+
+        .features-list li::before {
+            content: '✓';
+            color: #10B981;
+            font-weight: 700;
+        }
+
+        .features-list li.locked::before {
+            content: '🔒';
+        }
+
+        .features-list li.locked {
+            opacity: 0.5;
+        }
+
+        .storage-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 12px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .storage-fill {
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .upgrade-banner {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 1px dashed rgba(139, 92, 246, 0.4);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+        }
+
+        .upgrade-banner.hidden {
+            display: none;
+        }
+
+        .upgrade-text h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .upgrade-text p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .success-toast {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .success-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .subscription-card {
+                grid-column: span 1;
+            }
+
+            .subscription-details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .features-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-icon">☁️</span>
+                <span>CloudSync Pro</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/pricing.html">Pricing</a>
+                <a href="/settings.html">Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <div id="successToast" class="success-toast">
+        🎉 Subscription upgraded successfully!
+    </div>
+
+    <div class="dashboard-container">
+        <div class="welcome-section">
+            <h1>Welcome back, <span id="userName">User</span>!</h1>
+            <p id="userEmail">Loading...</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Subscription Card -->
+            <div class="card subscription-card">
+                <div class="plan-badge free" id="planBadge">
+                    <span>⭐</span>
+                    <span id="planName">Free Plan</span>
+                </div>
+
+                <div class="subscription-details">
+                    <div class="stat-item">
+                        <div class="stat-value" id="storageLimit">2 GB</div>
+                        <div class="stat-label">Storage Limit</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="usedStorage">0.5 GB</div>
+                        <div class="stat-label">Used</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="filesCount">24</div>
+                        <div class="stat-label">Files</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="expiresIn">-</div>
+                        <div class="stat-label">Expires</div>
+                    </div>
+                </div>
+
+                <div class="storage-bar">
+                    <div class="storage-fill" id="storageFill" style="width: 25%"></div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; font-size: 1rem;">Your Features</h3>
+                <ul class="features-list" id="featuresList">
+                    <!-- Filled by JS -->
+                </ul>
+
+                <div class="upgrade-banner" id="upgradeBanner">
+                    <div class="upgrade-text">
+                        <h3>🚀 Unlock More Power</h3>
+                        <p>Upgrade to get more storage and premium features</p>
+                    </div>
+                    <a href="/pricing.html" class="btn btn-primary">Upgrade Now</a>
+                </div>
+
+                <div class="quick-actions" id="resetSection" style="display: none;">
+                    <button class="btn btn-secondary" onclick="resetSubscription()">Reset to Free (Demo)</button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;">📁 Recent Files</h3>
+                <div style="color: var(--text-muted); font-size: 0.9rem;">
+                    <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                        📄 Project_Report.pdf <span style="float: right; opacity: 0.6;">2h ago</span>
+                    </div>
+                    <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                        🖼️ Photo_2024.jpg <span style="float: right; opacity: 0.6;">5h ago</span>
+                    </div>
+                    <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                        📊 Data_Analysis.xlsx <span style="float: right; opacity: 0.6;">1d ago</span>
+                    </div>
+                    <div style="padding: 0.75rem 0;">
+                        📁 Backup_Jan.zip <span style="float: right; opacity: 0.6;">3d ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Upload -->
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;">⬆️ Quick Upload</h3>
+                <div
+                    style="border: 2px dashed var(--border); border-radius: 12px; padding: 2rem; text-align: center; color: var(--text-muted);">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📤</div>
+                    <p>Drag files here or click to upload</p>
+                    <p style="font-size: 0.85rem; opacity: 0.6; margin-top: 0.5rem;">Max file size: <span
+                            id="maxFileSize">5 MB</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load user data
+        async function loadUser() {
+            try {
+                const response = await fetch('/api/user');
+                const user = await response.json();
+
+                // Update user info
+                document.getElementById('userName').textContent = user.name;
+                document.getElementById('userEmail').textContent = user.email;
+
+                // Update subscription info
+                const sub = user.subscription;
+                const planBadge = document.getElementById('planBadge');
+                const planName = document.getElementById('planName');
+
+                planBadge.className = `plan-badge ${sub.plan}`;
+                planName.textContent = `${sub.plan.charAt(0).toUpperCase() + sub.plan.slice(1)} Plan`;
+
+                document.getElementById('storageLimit').textContent = sub.storage;
+
+                // Update features list
+                const featuresList = document.getElementById('featuresList');
+                featuresList.innerHTML = '';
+
+                const allFeatures = [
+                    'Basic upload', '1 device', '10 GB Storage', '2 devices',
+                    'Basic support', 'Standard upload speed', '100 GB Storage',
+                    '5 devices', 'Priority support', 'Fast upload', 'File versioning',
+                    'Unlimited Storage', 'Unlimited devices', '24/7 support'
+                ];
+
+                sub.features.forEach(feature => {
+                    const li = document.createElement('li');
+                    li.textContent = feature;
+                    featuresList.appendChild(li);
+                });
+
+                // Show/hide upgrade banner based on plan
+                const upgradeBanner = document.getElementById('upgradeBanner');
+                const resetSection = document.getElementById('resetSection');
+
+                if (sub.plan === 'free') {
+                    upgradeBanner.classList.remove('hidden');
+                    resetSection.style.display = 'none';
+                    document.getElementById('maxFileSize').textContent = '5 MB';
+                } else {
+                    upgradeBanner.classList.add('hidden');
+                    resetSection.style.display = 'flex';
+                    document.getElementById('maxFileSize').textContent = sub.plan === 'enterprise' ? '10 GB' : '500 MB';
+                }
+
+                // Update expiry
+                if (sub.expiresAt) {
+                    const expires = new Date(sub.expiresAt);
+                    const days = Math.ceil((expires - new Date()) / (1000 * 60 * 60 * 24));
+                    document.getElementById('expiresIn').textContent = `${days} days`;
+                } else {
+                    document.getElementById('expiresIn').textContent = 'Never';
+                }
+
+            } catch (error) {
+                console.error('Failed to load user:', error);
+            }
+        }
+
+        // Reset subscription (for demo testing)
+        async function resetSubscription() {
+            try {
+                await fetch('/api/reset-subscription', { method: 'POST' });
+                location.reload();
+            } catch (error) {
+                alert('Failed to reset: ' + error.message);
+            }
+        }
+
+        // Check for upgrade success
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('upgraded') === 'true') {
+            const toast = document.getElementById('successToast');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 4000);
+
+            // Clean up URL
+            window.history.replaceState({}, '', '/dashboard.html');
+        }
+
+        // Load on page load
+        loadUser();
+    </script>
+</body>
+
+</html>

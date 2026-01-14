@@ -43,6 +43,7 @@ interface PaymentSession {
     description?: string;
     successUrl?: string; // Redirect after successful payment
     cancelUrl?: string;  // Redirect if user cancels
+    webhookUrl?: string; // Notify merchant's server on payment completion
     createdAt: Date;
     expiresAt: Date;
 }
@@ -54,10 +55,37 @@ function generateSessionId(): string {
     return 'sess_' + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
 }
 
+// Helper: Send Webhook to Merchant
+async function sendWebhook(webhookUrl: string, payload: object): Promise<void> {
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-MesoPay-Signature': generateSignature(payload),
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            console.error(`Webhook failed: ${response.status}`);
+        }
+    } catch (error) {
+        console.error(`Webhook error:`, error);
+    }
+}
+
+// Helper: Generate HMAC signature for webhook security
+function generateSignature(payload: object): string {
+    const crypto = require('crypto');
+    const secret = 'mesopay_webhook_secret'; // In production, this would be per-merchant
+    return crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
+}
+
 // API: Create Payment Session (Merchants call this)
 app.post('/api/create-session', (req, res) => {
     try {
-        const { storeName, storeIcon, orderId, amount, currency = 'IQD', description, successUrl, cancelUrl } = req.body;
+        const { storeName, storeIcon, orderId, amount, currency = 'IQD', description, successUrl, cancelUrl, webhookUrl } = req.body;
 
         if (!storeName || !orderId || !amount) {
             return res.status(400).json({
@@ -77,6 +105,7 @@ app.post('/api/create-session', (req, res) => {
             description,
             successUrl: successUrl || `/success.html?order=${orderId}&amount=${amount}`,
             cancelUrl: cancelUrl || `/failed.html?order=${orderId}`,
+            webhookUrl,
             createdAt: new Date(),
             expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 min expiry
         };
@@ -128,20 +157,21 @@ app.get('/api/session/:id', (req, res) => {
 // API: Create Payment
 app.post('/api/pay', async (req, res) => {
     try {
-        const { provider, amount } = req.body;
+        const { provider, amount, sessionId } = req.body;
 
         console.log(`Creating payment for ${provider} - ${amount} IQD`);
 
-        // In a real app, generate a real unique Order ID
-        const orderId = `ORD-${Date.now()}`;
+        // Get session if provided
+        const session = sessionId ? sessions.get(sessionId) : null;
+        const orderId = session?.orderId || `ORD-${Date.now()}`;
 
         const payment = await sdk.createPayment({
             provider: provider as PaymentProvider,
             amount: Number(amount),
             orderId: orderId,
-            callbackUrl: `http://localhost:${PORT}/success.html`,
-            webhookUrl: `http://localhost:${PORT}/api/webhook`,
-            description: 'Mesopotamia SDK Web Demo',
+            callbackUrl: session?.successUrl || `http://localhost:${PORT}/success.html`,
+            webhookUrl: `http://localhost:${PORT}/api/internal-webhook?sessionId=${sessionId || ''}`,
+            description: session?.description || 'MesoPay Web Demo',
         });
 
         res.json({
@@ -157,9 +187,45 @@ app.post('/api/pay', async (req, res) => {
     }
 });
 
-// API: Webhook (Simulation)
+// API: Internal Webhook Handler (receives from payment providers, forwards to merchants)
+app.post('/api/internal-webhook', async (req, res) => {
+    const { sessionId } = req.query;
+    const paymentData = req.body;
+
+    // If session has a merchant webhook URL, forward the notification
+    if (sessionId) {
+        const session = sessions.get(sessionId as string);
+        if (session) {
+            const txnId = paymentData.transactionId || `TXN-${Date.now()}`;
+            const status = paymentData.status === 'completed' ? 'SUCCESS' : 'FAILED';
+
+            console.log(`💳 Session completed: ${sessionId} → ${status} (${txnId})`);
+
+            if (session.webhookUrl) {
+                const webhookPayload = {
+                    event: 'payment.completed',
+                    orderId: session.orderId,
+                    amount: session.amount,
+                    currency: session.currency,
+                    status: 'paid',
+                    transactionId: txnId,
+                    timestamp: new Date().toISOString(),
+                };
+
+                // Send webhook to merchant (async, don't block response)
+                sendWebhook(session.webhookUrl, webhookPayload);
+            }
+
+            // Clean up completed session
+            sessions.delete(sessionId as string);
+        }
+    }
+
+    res.status(200).send('OK');
+});
+
+// API: Webhook (Fallback for local testing)
 app.post('/api/webhook', (req, res) => {
-    console.log('Webhook Received:', req.body);
     res.status(200).send('OK');
 });
 

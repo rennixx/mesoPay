@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - CloudSync Pro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <span class="logo-icon">☁️</span>
+                <span>CloudSync Pro</span>
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/pricing.html">Pricing</a>
+                <a href="/settings.html">Settings</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+
+        <h1>Payment Successful! 🎉</h1>
+        <p>Thank you for subscribing to CloudSync Pro. Your account has been upgraded.</p>
+
+        <div
+            style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; text-align: left; margin-bottom: 2rem;">
+            <div
+                style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                <span style="color: var(--text-muted);">Order ID</span>
+                <span id="orderId" style="font-weight: 600;">Loading...</span>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border);">
+                <span style="color: var(--text-muted);">Status</span>
+                <span style="color: #10B981; font-weight: 600;">✓ Paid</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 0.75rem 0;">
+                <span style="color: var(--text-muted);">Access</span>
+                <span style="font-weight: 600;">Immediate</span>
+            </div>
+        </div>
+
+        <a href="/" class="btn btn-primary">Go to Dashboard</a>
+    </div>
+
+    <script>
+        // Get order ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get('order') || 'N/A';
+        document.getElementById('orderId').textContent = orderId;
+    </script>
+</body>
+
+</html>

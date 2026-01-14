@@ -27,6 +27,9 @@ Cargo.lock
 /website/node_modules/
 /website/.next/
 
+# Demo Merchant
+/demo-merchant/node_modules/
+
 # Claude
 /.claude/
 
