@@ -23,6 +23,10 @@ Cargo.lock
 /nodejs/*.log
 /nodejs/package-lock.json
 
+# Website
+/website/node_modules/
+/website/.next/
+
 # Claude
 /.claude/
 
