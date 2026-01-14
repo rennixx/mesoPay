@@ -65,12 +65,13 @@
 
 
             <!-- Card Form -->
-            <form class="card-form">
+            <form class="card-form" autocomplete="off">
                 <div class="input-group">
                     <label>Card Number</label>
                     <div class="input-wrapper">
-                        <ion-icon name="card"></ion-icon>
-                        <input type="text" placeholder="0000 0000 0000 0000" maxlength="19">
+                        <ion-icon name="card" id="cardIcon"></ion-icon>
+                        <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19"
+                            autocomplete="off">
                     </div>
                 </div>
                 <div class="row">
@@ -78,14 +79,14 @@
                         <label>Expiry Date</label>
                         <div class="input-wrapper">
                             <ion-icon name="calendar"></ion-icon>
-                            <input type="text" placeholder="MM/YY" maxlength="5">
+                            <input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5" autocomplete="off">
                         </div>
                     </div>
                     <div class="input-group">
                         <label>CVV</label>
                         <div class="input-wrapper">
                             <ion-icon name="lock-closed"></ion-icon>
-                            <input type="text" placeholder="123" maxlength="3">
+                            <input type="text" id="cardCvv" placeholder="123" maxlength="3" autocomplete="off">
                         </div>
                     </div>
                 </div>
@@ -93,13 +94,14 @@
                     <label>Cardholder Name</label>
                     <div class="input-wrapper">
                         <ion-icon name="person"></ion-icon>
-                        <input type="text" placeholder="Start typing...">
+                        <input type="text" id="cardHolder" placeholder="Start typing..." autocomplete="off">
                     </div>
                 </div>
             </form>
 
-            <button class="pay-button" onclick="alert('Card payment simulated!')">
-                Pay IQD 50,000
+            <button id="payButtonCard" class="pay-button">
+                <span class="btn-text">Pay IQD 50,000</span>
+                <div class="spinner hidden"></div>
             </button>
         </div>
 
@@ -154,6 +156,18 @@
         <span>Powered by</span>
         <img src="assets/mesopay_logo.png" alt="MesoPay" class="footer-logo">
     </footer>
+
+    <!-- Status Modal -->
+    <div id="statusModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-icon-wrapper" id="modalIconBg">
+                <ion-icon name="checkmark" id="modalIcon"></ion-icon>
+            </div>
+            <h2 id="modalTitle">Payment Successful</h2>
+            <p id="modalMessage">Your transaction has been securely processed.</p>
+            <button class="modal-btn" id="modalBtn">Close</button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
