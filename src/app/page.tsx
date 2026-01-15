@@ -2,6 +2,8 @@
 
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
+import HostedCheckout from '@/components/HostedCheckout';
+import FlutterShowcase from '@/components/FlutterShowcase';
 import Installation from '@/components/Installation';
 import Gateways from '@/components/Gateways';
 import { motion } from 'framer-motion';
@@ -12,6 +14,8 @@ export default function Home() {
     <>
       <Hero />
       <Features />
+      <HostedCheckout />
+      <FlutterShowcase />
       <Installation />
       <Gateways />
 

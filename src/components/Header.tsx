@@ -56,8 +56,9 @@ export default function Header() {
                 <nav className="hidden md:flex items-center gap-1">
                     {[
                         { href: '#features', label: 'Features' },
-                        { href: '#installation', label: 'Installation' },
-                        { href: '#gateways', label: 'Gateways' },
+                        { href: '#hosted-checkout', label: 'Checkout' },
+                        { href: '#flutter-sdk', label: 'Flutter' },
+                        { href: '#installation', label: 'Install' },
                         { href: '/docs', label: 'Docs' },
                     ].map((link) => (
                         <motion.div key={link.href} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -130,6 +131,8 @@ export default function Header() {
                         <nav className="flex flex-col gap-2">
                             {[
                                 { href: '#features', label: 'Features' },
+                                { href: '#hosted-checkout', label: 'Hosted Checkout' },
+                                { href: '#flutter-sdk', label: 'Flutter SDK' },
                                 { href: '#installation', label: 'Installation' },
                                 { href: '#gateways', label: 'Gateways' },
                                 { href: '/docs', label: 'Docs' },
