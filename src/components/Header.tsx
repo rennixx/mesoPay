@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
@@ -23,9 +24,13 @@ const mobileNavLinks = [
 ];
 
 export default function Header() {
+    const pathname = usePathname();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeSection, setActiveSection] = useState<string | null>(null);
+
+    // Detect if we're on docs pages
+    const isDocsPage = pathname?.startsWith('/docs');
 
     useEffect(() => {
         const handleScroll = () => {
@@ -104,7 +109,9 @@ export default function Header() {
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-1">
                     {navLinks.map((link) => {
-                        const isActive = link.sectionId && activeSection === link.sectionId;
+                        const isActive = link.sectionId === 'docs'
+                            ? isDocsPage
+                            : (link.sectionId && activeSection === link.sectionId);
                         return (
                             <motion.div key={link.href} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                                 <Link
@@ -180,7 +187,9 @@ export default function Header() {
                     >
                         <nav className="flex flex-col gap-2">
                             {mobileNavLinks.map((link, i) => {
-                                const isActive = link.sectionId && activeSection === link.sectionId;
+                                const isActive = link.sectionId === 'docs'
+                                    ? isDocsPage
+                                    : (link.sectionId && activeSection === link.sectionId);
                                 return (
                                     <motion.div
                                         key={link.href}

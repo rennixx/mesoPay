@@ -1,21 +1,13 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { FadeIn } from '@/components/ScrollAnimations';
 import Link from 'next/link';
 
 export default function QuickstartPage() {
     return (
-        <div className="min-h-screen pt-32 pb-20">
+        <div className="pb-20">
             <div className="max-w-4xl mx-auto px-6">
                 <FadeIn>
-                    <Link href="/docs" className="text-gray-400 hover:text-white mb-6 inline-flex items-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back to Docs
-                    </Link>
-
                     <h1 className="text-4xl font-bold text-white mb-6">Quickstart Guide</h1>
                     <p className="text-xl text-gray-400 mb-10">Get started with MesoPay SDK in under 5 minutes.</p>
                 </FadeIn>
