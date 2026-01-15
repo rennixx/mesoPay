@@ -34,6 +34,9 @@ class WalletPaymentConfig {
   /// Primary color
   final Color primaryColor;
 
+  /// Set to true to show a "Simulate Success" button for testing
+  final bool simulationMode;
+
   /// Callback to check payment status (for polling)
   final Future<PaymentPollResult> Function(String transactionId) onPollStatus;
 
@@ -56,7 +59,8 @@ class WalletPaymentConfig {
     required this.amount,
     this.currency = 'IQD',
     this.timeoutSeconds = 300,
-    this.primaryColor = const Color(0xFF6C5CE7),
+    this.primaryColor = const Color(0xFF6366F1),
+    this.simulationMode = false,
     required this.onPollStatus,
     this.onPaymentConfirmed,
     this.onTimeout,
@@ -187,16 +191,26 @@ class _WalletPaymentWidgetState extends State<WalletPaymentWidget> {
       try {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } catch (e) {
-        // Couldn't open app
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Could not open ${widget.config.providerName} app'),
+              backgroundColor: Colors.red.shade700,
             ),
           );
         }
       }
     }
+  }
+
+  void _simulateSuccess() {
+    setState(() {
+      _status = PaymentPollStatus.completed;
+      _statusMessage = "Simulated successful payment";
+    });
+    _pollTimer?.cancel();
+    _countdownTimer?.cancel();
+    widget.config.onPaymentConfirmed?.call(widget.config.transactionId);
   }
 
   @override
@@ -205,87 +219,38 @@ class _WalletPaymentWidgetState extends State<WalletPaymentWidget> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(15),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Provider header
           _buildHeader(),
-          const SizedBox(height: 20),
-
-          // Amount
-          Text(
-            _formatAmount(),
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: widget.config.primaryColor,
-            ),
-          ),
+          const SizedBox(height: 16),
+          _buildAmountDisplay(),
           const SizedBox(height: 24),
 
-          // Status-dependent content
-          if (_status == PaymentPollStatus.pending) ...[
-            // QR Code
-            if (widget.config.qrCodeUrl != null) ...[
-              _buildQrCode(),
-              const SizedBox(height: 16),
-              Text(
-                'Scan with ${widget.config.providerName} app',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-            ],
+          // Main content area
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _buildCurrentStateView(),
+          ),
 
-            // Divider with "OR"
-            if (widget.config.qrCodeUrl != null &&
-                widget.config.deepLinkUrl != null) ...[
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'OR',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
-                ],
-              ),
-              const SizedBox(height: 20),
-            ],
+          const SizedBox(height: 24),
 
-            // Open in App button
-            if (widget.config.deepLinkUrl != null) _buildOpenInAppButton(),
-
-            const SizedBox(height: 24),
-
-            // Waiting indicator
-            _buildWaitingIndicator(),
-          ] else if (_status == PaymentPollStatus.completed) ...[
-            _buildSuccessState(),
-          ] else if (_status == PaymentPollStatus.failed ||
-              _status == PaymentPollStatus.expired) ...[
-            _buildFailedState(),
+          // Simulation Mode Button
+          if (widget.config.simulationMode &&
+              _status == PaymentPollStatus.pending) ...[
+            _buildSimulationBanner(),
+            const SizedBox(height: 16),
           ],
-
-          const SizedBox(height: 16),
 
           // Cancel button (only when pending)
           if (_status == PaymentPollStatus.pending)
@@ -296,10 +261,11 @@ class _WalletPaymentWidgetState extends State<WalletPaymentWidget> {
                 widget.config.onCancel?.call();
               },
               child: Text(
-                'Cancel Payment',
+                'Cancel Transaction',
                 style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color: Colors.grey.shade500,
                   fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -309,25 +275,6 @@ class _WalletPaymentWidgetState extends State<WalletPaymentWidget> {
   }
 
   Widget _buildHeader() {
-    // If providerLogo is set, use "Pay with [logo]" style
-    if (widget.config.providerLogo != null) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            'Pay with ',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF636E72),
-            ),
-          ),
-          widget.config.providerLogo!,
-        ],
-      );
-    }
-
-    // Otherwise use icon + name style
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -338,103 +285,161 @@ class _WalletPaymentWidgetState extends State<WalletPaymentWidget> {
         Text(
           'Pay with ${widget.config.providerName}',
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF2D3436),
+            color: Color(0xFF6B7280),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildQrCode() {
+  Widget _buildAmountDisplay() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: widget.config.qrCodeUrl != null
-          ? _QrCodeWithLoading(
-              url: widget.config.qrCodeUrl!,
-              size: 180,
-            )
-          : Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Icon(
-                Icons.qr_code_2,
-                size: 80,
-                color: Colors.grey.shade400,
-              ),
-            ),
-    );
-  }
-
-  Widget _buildOpenInAppButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton.icon(
-        onPressed: _openInApp,
-        icon: const Icon(Icons.open_in_new, size: 20),
-        label: Text('Open in ${widget.config.providerName} App'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: widget.config.primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+      child: Text(
+        _formatAmount(),
+        style: const TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF1F2937),
+          letterSpacing: -0.5,
         ),
       ),
     );
   }
 
-  Widget _buildWaitingIndicator() {
+  Widget _buildCurrentStateView() {
+    switch (_status) {
+      case PaymentPollStatus.pending:
+        return _buildPendingState();
+      case PaymentPollStatus.completed:
+        return _buildSuccessState();
+      case PaymentPollStatus.failed:
+      case PaymentPollStatus.expired:
+        return _buildFailedState();
+    }
+  }
+
+  Widget _buildPendingState() {
+    return Column(
+      key: const ValueKey('pending'),
+      children: [
+        if (widget.config.qrCodeUrl != null) ...[
+          _buildQrCodeView(),
+          const SizedBox(height: 16),
+          Text(
+            'Scan this QR code in your ${widget.config.providerName} app',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 24),
+        ],
+        if (widget.config.deepLinkUrl != null) ...[
+          _buildOpenInAppButton(),
+          const SizedBox(height: 20),
+        ],
+        _buildWaitingBanner(),
+      ],
+    );
+  }
+
+  Widget _buildQrCodeView() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: widget.config.primaryColor.withAlpha(15),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10),
+        ],
+      ),
+      child: widget.config.qrCodeUrl != null
+          ? _QrCodeWithLoading(url: widget.config.qrCodeUrl!, size: 180)
+          : Container(
+              width: 180,
+              height: 180,
+              color: Colors.grey.shade50,
+              child: const Icon(Icons.qr_code, size: 60, color: Colors.grey),
+            ),
+    );
+  }
+
+  Widget _buildOpenInAppButton() {
+    return Container(
+      width: double.infinity,
+      height: 52,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [
+            widget.config.primaryColor,
+            widget.config.primaryColor.withOpacity(0.8)
+          ],
+        ),
+      ),
+      child: ElevatedButton.icon(
+        onPressed: _openInApp,
+        icon: const Icon(Icons.open_in_new, size: 20, color: Colors.white),
+        label: Text('Open ${widget.config.providerName}'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          foregroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWaitingBanner() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      decoration: BoxDecoration(
+        color: widget.config.primaryColor.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 16,
-            height: 16,
+            width: 18,
+            height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: widget.config.primaryColor,
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(widget.config.primaryColor),
             ),
           ),
           const SizedBox(width: 12),
           Text(
-            'Waiting for payment...',
+            'Waiting for payment',
             style: TextStyle(
               fontSize: 14,
+              fontWeight: FontWeight.w700,
               color: widget.config.primaryColor,
-              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: widget.config.primaryColor.withAlpha(30),
-              borderRadius: BorderRadius.circular(4),
+              color: widget.config.primaryColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               _formatTime(_remainingSeconds),
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
                 color: widget.config.primaryColor,
                 fontFamily: 'monospace',
               ),
@@ -445,40 +450,74 @@ class _WalletPaymentWidgetState extends State<WalletPaymentWidget> {
     );
   }
 
+  Widget _buildSimulationBanner() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.shade200, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.science_outlined, color: Colors.amber, size: 24),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Demo Mode',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.amber),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _simulateSuccess,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            child:
+                const Text('Simulate Success', style: TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSuccessState() {
     return Column(
+      key: const ValueKey('success'),
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: 72,
+          height: 72,
           decoration: BoxDecoration(
-            color: Colors.green.shade50,
+            color: const Color(0xFF10B981).withOpacity(0.1),
             shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
           ),
-          child: Icon(
-            Icons.check_circle,
-            size: 48,
-            color: Colors.green.shade600,
-          ),
+          child: const Icon(Icons.check_circle_rounded,
+              size: 40, color: Color(0xFF10B981)),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         const Text(
           'Payment Successful!',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3436),
-          ),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1F2937)),
         ),
         if (_statusMessage != null) ...[
           const SizedBox(height: 8),
           Text(
             _statusMessage!,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
             textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
           ),
         ],
       ],
@@ -488,217 +527,79 @@ class _WalletPaymentWidgetState extends State<WalletPaymentWidget> {
   Widget _buildFailedState() {
     final isExpired = _status == PaymentPollStatus.expired;
     return Column(
+      key: const ValueKey('failed'),
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: 72,
+          height: 72,
           decoration: BoxDecoration(
-            color: (isExpired ? Colors.orange : Colors.red).shade50,
+            color: const Color(0xFFEF4444).withOpacity(0.1),
             shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.2)),
           ),
-          child: Icon(
-            isExpired ? Icons.timer_off : Icons.error,
-            size: 48,
-            color: (isExpired ? Colors.orange : Colors.red).shade600,
-          ),
+          child: const Icon(Icons.error_outline_rounded,
+              size: 40, color: Color(0xFFEF4444)),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         Text(
           isExpired ? 'Payment Expired' : 'Payment Failed',
           style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3436),
-          ),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1F2937)),
         ),
         const SizedBox(height: 8),
         Text(
           isExpired
-              ? 'The payment session has timed out'
-              : _statusMessage ?? 'Something went wrong',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
+              ? 'The payment session has timed out.'
+              : _statusMessage ?? 'An error occurred.',
           textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
         ),
       ],
     );
   }
 }
 
-/// QR Code widget with loading shimmer and fade-in animation
 class _QrCodeWithLoading extends StatefulWidget {
   final String url;
   final double size;
 
-  const _QrCodeWithLoading({
-    required this.url,
-    required this.size,
-  });
+  const _QrCodeWithLoading({required this.url, required this.size});
 
   @override
   State<_QrCodeWithLoading> createState() => _QrCodeWithLoadingState();
 }
 
-class _QrCodeWithLoadingState extends State<_QrCodeWithLoading>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _shimmerController;
+class _QrCodeWithLoadingState extends State<_QrCodeWithLoading> {
   bool _isLoaded = false;
-  bool _hasError = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _shimmerController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: Stack(
-        children: [
-          // Shimmer loading placeholder (always rendered, hidden when loaded)
-          if (!_isLoaded)
-            _ShimmerPlaceholder(
-              size: widget.size,
-              controller: _shimmerController,
-            ),
-
-          // Actual QR code image with fade-in
-          AnimatedOpacity(
-            opacity: _isLoaded && !_hasError ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.easeOut,
-            child: Image.network(
-              widget.url,
-              width: widget.size,
-              height: widget.size,
-              fit: BoxFit.contain,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) {
-                  // Image loaded, trigger fade-in
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted && !_isLoaded) {
-                      setState(() => _isLoaded = true);
-                    }
-                  });
-                  return child;
-                }
-                return const SizedBox.shrink();
-              },
-              errorBuilder: (context, error, stackTrace) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (mounted && !_hasError) {
-                    setState(() {
-                      _hasError = true;
-                      _isLoaded = true;
-                    });
-                  }
-                });
-                return const SizedBox.shrink();
-              },
-            ),
-          ),
-
-          // Error state
-          if (_hasError)
-            Container(
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.qr_code_2,
-                    size: 48,
-                    color: Colors.grey.shade400,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'QR Code unavailable',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Use "Open in App" below',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ShimmerPlaceholder extends StatelessWidget {
-  final double size;
-  final AnimationController controller;
-
-  const _ShimmerPlaceholder({
-    required this.size,
-    required this.controller,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.qr_code_2,
-            size: 48,
-            color: Colors.grey.shade300,
-          ),
-          const SizedBox(height: 12),
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        if (!_isLoaded)
           SizedBox(
-            width: 20,
-            height: 20,
+            width: widget.size,
+            height: widget.size,
             child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.grey.shade400,
-            ),
+                strokeWidth: 2, color: Colors.grey.shade300),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Loading QR...',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
-          ),
-        ],
-      ),
+        Image.network(
+          widget.url,
+          width: widget.size,
+          height: widget.size,
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) {
+              WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => setState(() => _isLoaded = true));
+              return child;
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ],
     );
   }
 }

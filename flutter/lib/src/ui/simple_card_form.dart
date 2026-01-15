@@ -19,12 +19,16 @@ class SimpleCardPaymentForm extends StatefulWidget {
   /// Primary button color
   final Color primaryColor;
 
+  /// Background color
+  final Color backgroundColor;
+
   const SimpleCardPaymentForm({
     super.key,
     required this.amount,
     this.currency = 'IQD',
     this.onSubmit,
-    this.primaryColor = const Color(0xFF6C5CE7),
+    this.primaryColor = const Color(0xFF6366F1),
+    this.backgroundColor = Colors.white,
   });
 
   @override
@@ -35,25 +39,29 @@ class CardData {
   final String cardNumber;
   final String expDate;
   final String cvv;
+  final String cardHolder;
   final CardType cardType;
 
   CardData({
     required this.cardNumber,
     required this.expDate,
     required this.cvv,
+    required this.cardHolder,
     required this.cardType,
   });
 
   bool get isValid =>
       cardNumber.replaceAll(' ', '').length >= 16 &&
       expDate.length == 5 &&
-      cvv.length >= 3;
+      cvv.length >= 3 &&
+      cardHolder.isNotEmpty;
 }
 
 class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
   final _cardNumberController = TextEditingController();
   final _expDateController = TextEditingController();
   final _cvvController = TextEditingController();
+  final _holderController = TextEditingController();
 
   bool _isLoading = false;
   CardType _detectedCardType = CardType.unknown;
@@ -70,6 +78,7 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
     _cardNumberController.dispose();
     _expDateController.dispose();
     _cvvController.dispose();
+    _holderController.dispose();
     super.dispose();
   }
 
@@ -86,25 +95,8 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
     final cleanNumber = number.replaceAll(' ', '');
     if (cleanNumber.isEmpty) return CardType.unknown;
 
-    // Visa: starts with 4
-    if (cleanNumber.startsWith('4')) {
-      return CardType.visa;
-    }
-    // Mastercard: starts with 51-55 or 2221-2720
-    if (cleanNumber.startsWith('5') && cleanNumber.length >= 2) {
-      final secondDigit = int.tryParse(cleanNumber[1]) ?? 0;
-      if (secondDigit >= 1 && secondDigit <= 5) {
-        return CardType.mastercard;
-      }
-    }
-    if (cleanNumber.startsWith('2')) {
-      if (cleanNumber.length >= 4) {
-        final prefix = int.tryParse(cleanNumber.substring(0, 4)) ?? 0;
-        if (prefix >= 2221 && prefix <= 2720) {
-          return CardType.mastercard;
-        }
-      }
-    }
+    if (cleanNumber.startsWith('4')) return CardType.visa;
+    if (cleanNumber.startsWith('5')) return CardType.mastercard;
 
     return CardType.unknown;
   }
@@ -122,6 +114,7 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
       cardNumber: _cardNumberController.text,
       expDate: _expDateController.text,
       cvv: _cvvController.text,
+      cardHolder: _holderController.text,
       cardType: _detectedCardType,
     );
 
@@ -134,15 +127,16 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        color: widget.backgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(15),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -150,41 +144,53 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header - "Pay with"
-          const Text(
-            'Pay with',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF2D3436),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Card Details',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              _buildCardIcons(),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Card Holder
+          _buildLabel('Card Holder Name'),
+          const SizedBox(height: 8),
+          _buildTextField(
+            controller: _holderController,
+            hint: 'e.g. John Doe',
+            icon: Icons.person_outline,
           ),
           const SizedBox(height: 16),
 
-          // Card type icons - only Visa and Mastercard
-          _buildCardIcons(),
-          const SizedBox(height: 28),
-
-          // Card number
-          _buildLabel('Card number'),
+          // Card Number
+          _buildLabel('Card Number'),
           const SizedBox(height: 8),
           _buildCardNumberField(),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Exp Date & CVV Row
+          // Row for Exp & CVV
           Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Exp Date'),
+                    _buildLabel('Expiry Date'),
                     const SizedBox(height: 8),
                     _buildExpDateField(),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,10 +203,11 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
               ),
             ],
           ),
-          const SizedBox(height: 28),
 
-          // Pay Button
+          const SizedBox(height: 32),
           _buildPayButton(),
+          const SizedBox(height: 20),
+          _buildFooter(),
         ],
       ),
     );
@@ -211,8 +218,8 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
       text,
       style: const TextStyle(
         fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: Color(0xFF636E72),
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF6B7280),
       ),
     );
   }
@@ -220,97 +227,69 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
   Widget _buildCardIcons() {
     return Row(
       children: [
-        _buildVisaIcon(),
-        const SizedBox(width: 12),
-        _buildMastercardIcon(),
+        _buildIconBox(CardType.visa),
+        const SizedBox(width: 8),
+        _buildIconBox(CardType.mastercard),
       ],
     );
   }
 
-  Widget _buildVisaIcon() {
-    final isActive = _detectedCardType == CardType.visa;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  Widget _buildIconBox(CardType type) {
+    final isActive =
+        _detectedCardType == type || _detectedCardType == CardType.unknown;
+    final isSelected = _detectedCardType == type;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF1A1F71) : Colors.white,
+        color: isSelected ? Colors.grey.shade50 : Colors.white,
         border: Border.all(
-          color: isActive ? const Color(0xFF1A1F71) : const Color(0xFFE0E0E0),
-          width: isActive ? 2 : 1,
+          color: isSelected ? widget.primaryColor : const Color(0xFFE5E7EB),
+          width: isSelected ? 1.5 : 1,
         ),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: const Color(0xFF1A1F71).withAlpha(80),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(
-        'VISA',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: isActive ? Colors.white : const Color(0xFF1A1F71),
-          fontStyle: FontStyle.italic,
-        ),
+      child: Opacity(
+        opacity: isActive ? 1.0 : 0.3,
+        child: type == CardType.visa
+            ? const Text('VISA',
+                style: TextStyle(
+                    color: Color(0xFF1A1F71),
+                    fontWeight: FontWeight.w900,
+                    fontStyle: FontStyle.italic,
+                    fontSize: 10))
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                          color: Color(0xFFEB001B), shape: BoxShape.circle)),
+                  Transform.translate(
+                    offset: const Offset(-3, 0),
+                    child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                            color: const Color(0xFFF79E1B).withOpacity(0.8),
+                            shape: BoxShape.circle)),
+                  ),
+                ],
+              ),
       ),
     );
   }
 
-  Widget _buildMastercardIcon() {
-    final isActive = _detectedCardType == CardType.mastercard;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: 48,
-      height: 32,
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFFF5F00) : Colors.white,
-        border: Border.all(
-          color: isActive ? const Color(0xFFFF5F00) : const Color(0xFFE0E0E0),
-          width: isActive ? 2 : 1,
-        ),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFFF5F00).withAlpha(100),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 8,
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEB001B),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 8,
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF79E1B),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ],
-      ),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: _inputDecoration(hint: hint, icon: icon),
+      style: const TextStyle(fontSize: 15, color: Color(0xFF1F2937)),
     );
   }
 
@@ -323,12 +302,10 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
         _CardNumberFormatter(),
         LengthLimitingTextInputFormatter(19),
       ],
+      decoration: _inputDecoration(
+          hint: '0000 0000 0000 0000', icon: Icons.credit_card),
       style: const TextStyle(
-        fontSize: 16,
-        color: Color(0xFF2D3436),
-        letterSpacing: 1,
-      ),
-      decoration: _inputDecoration(),
+          fontSize: 15, color: Color(0xFF1F2937), letterSpacing: 1),
     );
   }
 
@@ -341,11 +318,9 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
         _ExpiryDateFormatter(),
         LengthLimitingTextInputFormatter(5),
       ],
-      style: const TextStyle(
-        fontSize: 16,
-        color: Color(0xFF2D3436),
-      ),
-      decoration: _inputDecoration(hint: 'MM/YY'),
+      decoration:
+          _inputDecoration(hint: 'MM/YY', icon: Icons.calendar_today_outlined),
+      style: const TextStyle(fontSize: 15, color: Color(0xFF1F2937)),
     );
   }
 
@@ -358,84 +333,104 @@ class _SimpleCardPaymentFormState extends State<SimpleCardPaymentForm> {
         FilteringTextInputFormatter.digitsOnly,
         LengthLimitingTextInputFormatter(4),
       ],
-      style: const TextStyle(
-        fontSize: 16,
-        color: Color(0xFF2D3436),
-      ),
-      decoration: _inputDecoration(hint: '•••'),
+      decoration: _inputDecoration(hint: '***', icon: Icons.lock_outline),
+      style: const TextStyle(fontSize: 15, color: Color(0xFF1F2937)),
     );
   }
 
-  InputDecoration _inputDecoration({String? hint}) {
+  InputDecoration _inputDecoration(
+      {required String hint, required IconData icon}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(
-        color: const Color(0xFF2D3436).withAlpha(80),
-      ),
+      prefixIcon: Icon(icon, size: 20, color: const Color(0xFF9CA3AF)),
+      hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
       filled: true,
-      fillColor: const Color(0xFFF8F9FA),
+      fillColor: const Color(0xFFF9FAFB),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: BorderSide.none,
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(6),
-        borderSide: BorderSide(
-          color: widget.primaryColor.withAlpha(100),
-          width: 2,
-        ),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: widget.primaryColor, width: 2),
       ),
     );
   }
 
   Widget _buildPayButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 52,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          colors: [widget.primaryColor, widget.primaryColor.withOpacity(0.8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: widget.primaryColor.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleSubmit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: widget.primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: _isLoading
             ? const SizedBox(
-                width: 22,
-                height: 22,
+                width: 24,
+                height: 24,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: Colors.white,
-                ),
+                    strokeWidth: 2, color: Colors.white),
               )
             : Text(
                 'Pay ${_formatAmount()}',
                 style: const TextStyle(
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.3,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
       ),
     );
   }
+
+  Widget _buildFooter() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.lock, size: 14, color: Colors.grey.shade400),
+        const SizedBox(width: 6),
+        Text(
+          'Secured by MesoPay',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey.shade400,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-// Formatters
 class _CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+      TextEditingValue oldValue, TextEditingValue newValue) {
     final text = newValue.text.replaceAll(' ', '');
     final buffer = StringBuffer();
     for (int i = 0; i < text.length; i++) {
@@ -452,9 +447,7 @@ class _CardNumberFormatter extends TextInputFormatter {
 class _ExpiryDateFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+      TextEditingValue oldValue, TextEditingValue newValue) {
     final text = newValue.text.replaceAll('/', '');
     final buffer = StringBuffer();
     for (int i = 0; i < text.length && i < 4; i++) {

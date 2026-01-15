@@ -9,6 +9,9 @@ const PORT = 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Set to true to test wallet payments without real merchant credentials
+const SIMULATION_MODE = true;
+
 // Initialize SDK with Sandbox credentials
 const sdk = new MesopotamiaSDK({
     environment: Environment.SANDBOX,
@@ -165,6 +168,50 @@ app.post('/api/pay', async (req, res) => {
         const session = sessionId ? sessions.get(sessionId) : null;
         const orderId = session?.orderId || `ORD-${Date.now()}`;
 
+        if (SIMULATION_MODE) {
+            console.log(`🧪 SIMULATION MODE: Skipping real ${provider} API call`);
+
+            // Simulate unique transaction ID
+            const transactionId = `${provider.toUpperCase()}_SIM_${Date.now().toString(36).toUpperCase()}`;
+
+            // Simulate redirect to the success URL
+            const redirectUrl = session?.successUrl || `http://localhost:${PORT}/success.html?txn=${transactionId}&order=${orderId}&amount=${amount}`;
+
+            // Trigger the internal webhook asynchronously to notify the merchant
+            // This mimics the gateway calling our webhook after a successful payment
+            if (sessionId) {
+                setTimeout(async () => {
+                    try {
+                        console.log(`🧪 SIMULATION MODE: Triggering merchant webhook for ${sessionId}`);
+                        // We reuse the same logic as the real webhook handler
+                        if (session?.webhookUrl) {
+                            const webhookPayload = {
+                                event: 'payment.completed',
+                                orderId: session.orderId,
+                                amount: session.amount,
+                                currency: session.currency,
+                                status: 'paid',
+                                transactionId: transactionId,
+                                timestamp: new Date().toISOString(),
+                            };
+                            await sendWebhook(session.webhookUrl, webhookPayload);
+                        }
+                        sessions.delete(sessionId);
+                    } catch (err) {
+                        console.error('Simulation Webhook Error:', err);
+                    }
+                }, 1000);
+            }
+
+            return res.json({
+                success: true,
+                redirectUrl: redirectUrl,
+                transactionId: transactionId,
+                simulation: true
+            });
+        }
+
+        /* FUTURE USAGE: Uncomment this and provide real credentials when ready
         const payment = await sdk.createPayment({
             provider: provider as PaymentProvider,
             amount: Number(amount),
@@ -179,6 +226,13 @@ app.post('/api/pay', async (req, res) => {
             redirectUrl: payment.redirectUrl,
             deepLink: payment.deepLink,
             transactionId: payment.transactionId
+        });
+        */
+
+        // Placeholder error for when SIMULATION_MODE is false but code is still commented out
+        res.status(501).json({
+            success: false,
+            error: 'Production payment logic is commented out. Switch to SIMULATION_MODE or add credentials.'
         });
 
     } catch (error: any) {
