@@ -5,9 +5,27 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const navLinks = [
+    { href: '/#features', label: 'Features', sectionId: 'features' },
+    { href: '/#hosted-checkout', label: 'Checkout', sectionId: 'hosted-checkout' },
+    { href: '/#flutter-sdk', label: 'Flutter', sectionId: 'flutter-sdk' },
+    { href: '/#installation', label: 'Install', sectionId: 'installation' },
+    { href: '/docs', label: 'Docs', sectionId: 'docs' },
+];
+
+const mobileNavLinks = [
+    { href: '/#features', label: 'Features', sectionId: 'features' },
+    { href: '/#hosted-checkout', label: 'Hosted Checkout', sectionId: 'hosted-checkout' },
+    { href: '/#flutter-sdk', label: 'Flutter SDK', sectionId: 'flutter-sdk' },
+    { href: '/#installation', label: 'Installation', sectionId: 'installation' },
+    { href: '/#gateways', label: 'Gateways', sectionId: 'gateways' },
+    { href: '/docs', label: 'Docs', sectionId: 'docs' },
+];
+
 export default function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [activeSection, setActiveSection] = useState<string | null>(null);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -15,6 +33,37 @@ export default function Header() {
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Track active section using IntersectionObserver
+    useEffect(() => {
+        const sectionIds = ['features', 'hosted-checkout', 'flutter-sdk', 'installation', 'gateways'];
+        const observers: IntersectionObserver[] = [];
+
+        sectionIds.forEach((id) => {
+            const element = document.getElementById(id);
+            if (element) {
+                const observer = new IntersectionObserver(
+                    (entries) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting && entry.intersectionRatio > 0) {
+                                setActiveSection(id);
+                            }
+                        });
+                    },
+                    {
+                        threshold: [0.1, 0.2, 0.3],
+                        rootMargin: '-80px 0px -40% 0px'
+                    }
+                );
+                observer.observe(element);
+                observers.push(observer);
+            }
+        });
+
+        return () => {
+            observers.forEach((observer) => observer.disconnect());
+        };
     }, []);
 
     return (
@@ -54,22 +103,23 @@ export default function Header() {
 
                 {/* Desktop Navigation */}
                 <nav className="hidden md:flex items-center gap-1">
-                    {[
-                        { href: '#features', label: 'Features' },
-                        { href: '#hosted-checkout', label: 'Checkout' },
-                        { href: '#flutter-sdk', label: 'Flutter' },
-                        { href: '#installation', label: 'Install' },
-                        { href: '/docs', label: 'Docs' },
-                    ].map((link) => (
-                        <motion.div key={link.href} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Link
-                                href={link.href}
-                                className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors rounded-full hover:bg-white/5"
-                            >
-                                {link.label}
-                            </Link>
-                        </motion.div>
-                    ))}
+                    {navLinks.map((link) => {
+                        const isActive = link.sectionId && activeSection === link.sectionId;
+                        return (
+                            <motion.div key={link.href} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                <Link
+                                    href={link.href}
+                                    onClick={() => link.sectionId && setActiveSection(link.sectionId)}
+                                    className={`relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${isActive
+                                        ? 'text-white bg-gradient-to-r from-purple-500/25 to-blue-500/25 border border-purple-500/50 shadow-sm shadow-purple-500/20'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                >
+                                    {link.label}
+                                </Link>
+                            </motion.div>
+                        );
+                    })}
                 </nav>
 
                 {/* Divider */}
@@ -129,29 +179,31 @@ export default function Header() {
                         className="absolute top-20 left-4 right-4 p-4 rounded-2xl bg-black/90 backdrop-blur-xl border border-white/10 md:hidden"
                     >
                         <nav className="flex flex-col gap-2">
-                            {[
-                                { href: '#features', label: 'Features' },
-                                { href: '#hosted-checkout', label: 'Hosted Checkout' },
-                                { href: '#flutter-sdk', label: 'Flutter SDK' },
-                                { href: '#installation', label: 'Installation' },
-                                { href: '#gateways', label: 'Gateways' },
-                                { href: '/docs', label: 'Docs' },
-                            ].map((link, i) => (
-                                <motion.div
-                                    key={link.href}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: i * 0.05 }}
-                                >
-                                    <Link
-                                        href={link.href}
-                                        className="block px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
-                                        onClick={() => setMobileMenuOpen(false)}
+                            {mobileNavLinks.map((link, i) => {
+                                const isActive = link.sectionId && activeSection === link.sectionId;
+                                return (
+                                    <motion.div
+                                        key={link.href}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: i * 0.05 }}
                                     >
-                                        {link.label}
-                                    </Link>
-                                </motion.div>
-                            ))}
+                                        <Link
+                                            href={link.href}
+                                            className={`block px-4 py-3 rounded-xl transition-colors ${isActive
+                                                ? 'text-white bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/40'
+                                                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                                }`}
+                                            onClick={() => {
+                                                if (link.sectionId) setActiveSection(link.sectionId);
+                                                setMobileMenuOpen(false);
+                                            }}
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    </motion.div>
+                                );
+                            })}
                             <motion.div
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -173,3 +225,4 @@ export default function Header() {
         </header>
     );
 }
+
